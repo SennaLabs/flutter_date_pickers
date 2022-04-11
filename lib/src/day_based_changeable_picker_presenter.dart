@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-
+import 'package:intl/intl.dart';
+import "package:buddhist_datetime_dateformat_sns/buddhist_datetime_dateformat_sns.dart";
 import 'day_based_changable_picker.dart';
 import 'utils.dart';
 
@@ -12,10 +13,10 @@ class DayBasedChangeablePickerPresenter {
 
   /// Last date user can select.
   final DateTime lastDate;
-  
+
   /// Localization.
   final MaterialLocalizations localizations;
-  
+
   /// If empty day cells before 1st day of showing month should be filled with
   /// date from the last week of the previous month.
   final bool showPrevMonthDates;
@@ -23,11 +24,11 @@ class DayBasedChangeablePickerPresenter {
   /// If empty day cells after last day of showing month should be filled with
   /// date from the first week of the next month.
   final bool showNextMonthDates;
-  
+
   /// Index of the first day in week.
   /// 0 is Sunday, 6 is Saturday.
   final int firstDayOfWeekIndex;
-  
+
   /// View model stream for the [DayBasedChangeablePicker].
   Stream<DayBasedChangeablePickerState> get data => _controller.stream;
 
@@ -35,18 +36,18 @@ class DayBasedChangeablePickerPresenter {
   DayBasedChangeablePickerState? get lastVal => _lastVal;
 
   /// Creates presenter to use for [DayBasedChangeablePicker].
-  DayBasedChangeablePickerPresenter({
-    required this.firstDate,
-    required this.lastDate,
-    required this.localizations,
-    required this.showPrevMonthDates,
-    required this.showNextMonthDates,
-    int? firstDayOfWeekIndex
-  }): firstDayOfWeekIndex = firstDayOfWeekIndex
-          ?? localizations.firstDayOfWeekIndex;
+  DayBasedChangeablePickerPresenter(
+      {required this.firstDate,
+      required this.lastDate,
+      required this.localizations,
+      required this.showPrevMonthDates,
+      required this.showNextMonthDates,
+      int? firstDayOfWeekIndex})
+      : firstDayOfWeekIndex =
+            firstDayOfWeekIndex ?? localizations.firstDayOfWeekIndex;
 
   /// Update state according to the [selectedDate] if it needs.
-  void setSelectedDate(DateTime selectedDate) {
+  void setSelectedDate(DateTime selectedDate, BuildContext context) {
     // bool firstAndLastNotNull = _firstShownDate != null
     //     && _lastShownDate != null;
     //
@@ -55,43 +56,48 @@ class DayBasedChangeablePickerPresenter {
     //     && !selectedDate.isAfter(_lastShownDate);
     // if (selectedOnCurPage) return;
 
-    changeMonth(selectedDate);
+    changeMonth(selectedDate, context);
   }
 
   /// Update state to show previous month.
-  void gotoPrevMonth() {
+  void gotoPrevMonth(BuildContext context) {
     DateTime oldCur = _lastVal!.currentMonth;
     DateTime newCurDate = DateTime(oldCur.year, oldCur.month - 1);
 
-    changeMonth(newCurDate);
+    changeMonth(newCurDate, context);
   }
 
   /// Update state to show next month.
-  void gotoNextMonth() {
+  void gotoNextMonth(BuildContext context) {
     DateTime oldCur = _lastVal!.currentMonth;
     DateTime newCurDate = DateTime(oldCur.year, oldCur.month + 1);
 
-    changeMonth(newCurDate);
+    changeMonth(newCurDate, context);
   }
 
   /// Update state to change month to the [newMonth].
-  void changeMonth(DateTime newMonth) {
-    bool sameMonth = _lastVal != null
-        && DatePickerUtils.sameMonth(_lastVal!.currentMonth, newMonth);
+  void changeMonth(DateTime newMonth, BuildContext context) {
+    final dateFormat = DateFormat("MM yyyy");
+    final locale = Localizations.localeOf(context);
+    bool sameMonth = _lastVal != null &&
+        DatePickerUtils.sameMonth(_lastVal!.currentMonth, newMonth);
     if (sameMonth) return;
 
     int monthPage = DatePickerUtils.monthDelta(firstDate, newMonth);
-    DateTime prevMonth = DatePickerUtils
-        .addMonthsToMonthDate(firstDate, monthPage - 1);
+    DateTime prevMonth =
+        DatePickerUtils.addMonthsToMonthDate(firstDate, monthPage - 1);
 
-    DateTime curMonth = DatePickerUtils
-        .addMonthsToMonthDate(firstDate, monthPage);
+    DateTime curMonth =
+        DatePickerUtils.addMonthsToMonthDate(firstDate, monthPage);
 
-    DateTime nextMonth = DatePickerUtils
-        .addMonthsToMonthDate(firstDate, monthPage + 1);
+    DateTime nextMonth =
+        DatePickerUtils.addMonthsToMonthDate(firstDate, monthPage + 1);
 
     String prevMonthStr = localizations.formatMonthYear(prevMonth);
-    String curMonthStr = localizations.formatMonthYear(curMonth);
+    String curMonthStr = locale.languageCode.toLowerCase() == 'en'
+        ? dateFormat.format(curMonth.toLocal())
+        : dateFormat.formatInBuddhistCalendarThai(curMonth.toLocal());
+
     String nextMonthStr = localizations.formatMonthYear(nextMonth);
 
     bool isFirstMonth = DatePickerUtils.sameMonth(curMonth, firstDate);
@@ -101,9 +107,8 @@ class DayBasedChangeablePickerPresenter {
         ? null
         : "${localizations.previousMonthTooltip} $prevMonthStr";
 
-    String? nextTooltip = isLastMonth
-        ? null
-        : "${localizations.nextMonthTooltip} $nextMonthStr";
+    String? nextTooltip =
+        isLastMonth ? null : "${localizations.nextMonthTooltip} $nextMonthStr";
 
     DayBasedChangeablePickerState newState = DayBasedChangeablePickerState(
         currentMonth: curMonth,
@@ -113,14 +118,13 @@ class DayBasedChangeablePickerPresenter {
         prevTooltip: prevTooltip,
         nextTooltip: nextTooltip,
         isFirstMonth: isFirstMonth,
-        isLastMonth: isLastMonth
-    );
+        isLastMonth: isLastMonth);
 
     _updateState(newState);
   }
 
   /// Closes controller.
-  void dispose () {
+  void dispose() {
     _controller.close();
   }
 
@@ -130,15 +134,13 @@ class DayBasedChangeablePickerPresenter {
   }
 
   final StreamController<DayBasedChangeablePickerState> _controller =
-    StreamController.broadcast();
+      StreamController.broadcast();
 
   DayBasedChangeablePickerState? _lastVal;
 }
 
-
 /// View Model for the [DayBasedChangeablePicker].
 class DayBasedChangeablePickerState {
-
   /// Display name of the current month.
   final String curMonthDis;
 

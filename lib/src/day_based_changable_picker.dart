@@ -231,10 +231,12 @@ class _DayBasedChangeablePickerState<T>
             nextPageIconKey: widget.datePickerKeys?.nextPageIconKey,
             previousMonthTooltip: state.prevTooltip,
             nextMonthTooltip: state.nextTooltip,
-            onPreviousMonthTapped:
-                state.isFirstMonth ? null : _presenter.gotoPrevMonth,
-            onNextMonthTapped:
-                state.isLastMonth ? null : _presenter.gotoNextMonth,
+            onPreviousMonthTapped: () {
+              state.isFirstMonth ? null : _presenter.gotoPrevMonth(context);
+            },
+            onNextMonthTapped: () {
+              state.isLastMonth ? null : _presenter.gotoNextMonth(context);
+            },
             title: Text(
               state.curMonthDis,
               key: widget.datePickerKeys?.selectedPeriodKeys,
@@ -316,7 +318,7 @@ class _DayBasedChangeablePickerState<T>
     // It should be done after first frame when PageView is already created.
     // Otherwise event from presenter will cause a error.
     WidgetsBinding.instance!.addPostFrameCallback((_) {
-      _presenter.setSelectedDate(initSelection);
+      _presenter.setSelectedDate(initSelection, context);
     });
   }
 
@@ -331,7 +333,7 @@ class _DayBasedChangeablePickerState<T>
   void _handleMonthPageChanged(int monthPage) {
     DateTime firstMonth = widget.firstDate;
     DateTime newMonth = DateTime(firstMonth.year, firstMonth.month + monthPage);
-    _presenter.changeMonth(newMonth);
+    _presenter.changeMonth(newMonth, context);
 
     widget.onMonthChanged?.call(newMonth);
   }
