@@ -77,7 +77,8 @@ class DayBasedChangeablePickerPresenter {
 
   /// Update state to change month to the [newMonth].
   void changeMonth(DateTime newMonth, BuildContext context) {
-    final dateFormat = DateFormat("MM yyyy");
+    final dateFormat = DateFormat("MMMM yyyy", 'en');
+    final thaiDateFormat = DateFormat("MMMM yyyy", 'th');
     final locale = Localizations.localeOf(context);
     bool sameMonth = _lastVal != null &&
         DatePickerUtils.sameMonth(_lastVal!.currentMonth, newMonth);
@@ -96,7 +97,7 @@ class DayBasedChangeablePickerPresenter {
     String prevMonthStr = localizations.formatMonthYear(prevMonth);
     String curMonthStr = locale.languageCode.toLowerCase() == 'en'
         ? dateFormat.format(curMonth.toLocal())
-        : dateFormat.formatInBuddhistCalendarThai(curMonth.toLocal());
+        : thaiDateFormat.formatInBuddhistCalendarThai(curMonth.toLocal());
 
     String nextMonthStr = localizations.formatMonthYear(nextMonth);
 
